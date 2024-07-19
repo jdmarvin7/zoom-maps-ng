@@ -1,31 +1,16 @@
 <div class="flex w-full h-[100vh]">
-    <div id="maps" class="w-2/3 h-full">
+    <div id="maps" class="w-2/3 h-full relative">
+        <form>
+            <input type="file" class="absolute z-50 right-0" (change)="arquivoSelecionado($event)" #fileUpload>
+        </form>
         <google-map
             height="100%"
             width="100%"
             [center]="center"
             [zoom]="zoom"
-            (mapClick)="moveMap($event)"
+            (mapClick)="criarMarker($event)"
             (mapInitialized)="initMap($event)"
         >
-            <!-- <map-bicycling-layer /> -->
-            <!-- <map-kml-layer [url]="kmlUrl" /> -->
-            <!-- @for (polygon of polygons; track $index) {
-          } -->
-            <!-- <map-polygon *ngFor="let polygon of polygons" [options]="polygon" (polygonClick)="handlePolygonClick($event)"
-            [paths]="polygon?.paths || []"></map-polygon>
-          <map-info-window [textContent]="infoWindowContent" [position]="center">
-          </map-info-window> -->
-            <!-- <map-marker #marker="mapMarker" [position]="center" (mapClick)="openInfoWindow(marker)"/> -->
-            <!-- <map-marker-clusterer [imagePath]="markerClustererImagePath">
-          </map-marker-clusterer> -->
-            <!-- Polygon principal -->
-            <!-- <map-polygon [paths]="vertices" [options]="polygonOptions">
-            </map-polygon> -->
-
-            <!-- <map-polyline [path]="vertices" /> -->
-            <!-- <map-rectangle [bounds]="bounds" /> -->
-            <!-- <map-traffic-layer [autoRefresh]="false" /> -->
         </google-map>
     </div>
     <div class="bg-red-500 h-full w-1/3">

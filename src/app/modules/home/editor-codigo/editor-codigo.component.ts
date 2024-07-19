@@ -1,15 +1,17 @@
 import { CommonModule } from '@angular/common';
 import {
     AfterViewInit,
+    ChangeDetectorRef,
     Component,
     ElementRef,
-    EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
-    Output,
     ViewChild
 } from '@angular/core';
 import * as ace from 'ace-builds';
+import { GoogleMapsService } from '../../../services/google-maps/google-maps.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-editor-codigo',
@@ -20,21 +22,43 @@ import * as ace from 'ace-builds';
     templateUrl: './editor-codigo.component.html',
     styleUrl: './editor-codigo.component.scss'
 })
-export class EditorCodigoComponent implements OnInit, AfterViewInit {
+export class EditorCodigoComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('editor') private editor!: ElementRef<HTMLElement>;
-    @Output() content = new EventEmitter<any>();
     @Input() classes = 'w-1/2 h-[80vh]';
+    conteudo!: string;
 
-    ngOnInit(): void {}
+    private subscription!: Subscription;
+    aceEditor!: ace.Ace.Editor;
+
+    constructor(
+        private googleMapsService: GoogleMapsService,
+        private cdr: ChangeDetectorRef,
+    ) {}
+
+    ngOnInit(): void {
+        this.subscription = this.googleMapsService.pegarGeoJson().subscribe({
+            next: (data) => {
+                this.conteudo = JSON.stringify(data, null, 2);
+                if (this.aceEditor) {
+                    this.aceEditor?.session.setValue(this.conteudo);
+                }
+                this.cdr.detectChanges();
+            },
+        })
+    }
 
     ngAfterViewInit(): void {
+        this.criarIDE();
+    }
+
+    criarIDE(): void {
         ace.config.set('fontSize', '16px');
         ace.config.set('basePath', 'https://ace.c9.io/build/src-noconflict/');
 
-        const aceEditor = ace.edit(this.editor?.nativeElement);
-        aceEditor.session.setMode('ace/mode/json');
-        aceEditor.setTheme('ace/theme/monokai');
-        aceEditor.setOptions({
+        this.aceEditor = ace.edit(this.editor?.nativeElement);
+        this.aceEditor.session.setMode('ace/mode/json');
+        this.aceEditor.setTheme('ace/theme/monokai');
+        this.aceEditor.setOptions({
             enableBasicAutocompletion: true,
             enableSnippets: true,
             enableLiveAutocompletion: true,
@@ -46,9 +70,15 @@ export class EditorCodigoComponent implements OnInit, AfterViewInit {
         });
 
         // Set initial content and handle changes
-        aceEditor.session.setValue('{\n\t"key": "value"\n}');
-        aceEditor.on('change', () => {
-            console.log(aceEditor.getSession().getAnnotations());
+        this.aceEditor.session.setValue(this.conteudo);
+        this.aceEditor.on('change', () => {
+            const value = this.aceEditor.getValue();
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
     }
 }
