@@ -4,7 +4,7 @@ import { EditorCodigoComponent } from '../editor-codigo/editor-codigo.component'
 import { CommonModule } from '@angular/common';
 import * as togpx from '@tmcw/togeojson';
 import { GoogleMapsService } from '../../../services/google-maps/google-maps.service';
-import { GeoJson } from '../../../DTOs/geoJsonDTO';
+import { Feature, GeoJson, Geometry } from '../../../DTOs/geoJsonDTO';
 
 @Component({
     selector: 'app-google-maps',
@@ -26,10 +26,13 @@ export class GoogleMapsComponent {
         draggable: false
     };
     markers: google.maps.LatLngLiteral[] = [];
+    coordenadasTipoLatLng: any = [];
+    objFeature: {
+        nome: string;
+        polygonsOptions: google.maps.PolygonOptions[];
+    }[] = [];
 
-    constructor(
-        private googleMapsService: GoogleMapsService,
-    ) {}
+    constructor(private googleMapsService: GoogleMapsService) {}
 
     initMap(map: google.maps.Map): void {
         this.map = map;
@@ -65,8 +68,8 @@ export class GoogleMapsComponent {
         reader.onload = (event) => {
             const kmlString = event.target?.result as string;
             const geo = this.converterKmlparaGeoJSON(kmlString);
-            const latLng = this.converterGeoJSONParaLatLng(geo);
             this.googleMapsService.setarGeoJson(geo);
+            const latLng = this.geoToLatLng(geo);
         };
         reader.readAsText(file);
     }
@@ -86,21 +89,125 @@ export class GoogleMapsComponent {
         return geoJSON;
     }
 
-    converterGeoJSONParaLatLng(geoJSON: GeoJson): google.maps.LatLng | google.maps.LatLng[] | google.maps.LatLng[][] {
-        switch (geoJSON.type) {
-            case "Point":
-              return new google.maps.LatLng(geoJSON.coordinates[1], geoJSON.coordinates[0]);
+    geoToLatLng(geojson: GeoJson): void {
+        switch (geojson.type) {
+            case 'FeatureCollection':
+                const features: Feature[] | undefined = geojson.features;
+                if (features) {
+                    let data: google.maps.LatLng[] = [];
+                    features.forEach((feature) => {
+                        let objPolygonOptions: {
+                            nome: string;
+                            polygonsOptions: google.maps.PolygonOptions[];
+                        };
 
-            case "LineString":
-              return geoJSON.coordinates.map((coord: any) => new google.maps.LatLng(coord[1], coord[0]));
+                        if (feature.geometry.type !== 'GeometryCollection') {
+                            const donees = this.converterGeoJSONParaLatLng(
+                                feature.geometry
+                            );
+                            data = donees;
+                        } else {
+                            const outro = this.converterGeometryCollection(
+                                feature.geometry
+                            );
+                            data = outro;
+                        }
 
-            case "Polygon":
-              return geoJSON.coordinates.map((ring: any) => ring.map((coord: any) => new google.maps.LatLng(coord[1], coord[0])));
+                        if (data) {
+                            const options: google.maps.PolygonOptions = {
+                                paths: data,
+                                fillColor: feature.properties.fill || '#0284C7',
+                                strokeColor:
+                                    feature.properties.stroke || 'black',
+                                fillOpacity:
+                                    feature.properties['fill-opacity'] || 0.6,
+                                strokeOpacity:
+                                    feature.properties['stroke-opacity'] || 1,
+                                strokeWeight:
+                                    feature.properties['stroke-width'] || 1
+                            };
 
-            // Add more cases for other geoJSON types as needed...
+                            objPolygonOptions = {
+                                nome:
+                                    feature.properties['nome'] ||
+                                    feature.properties['name'],
+                                polygonsOptions: []
+                            };
+
+                            objPolygonOptions.polygonsOptions.push(options);
+                            this.objFeature.push(objPolygonOptions);
+                        }
+
+                    });
+                    this.desenharNoMaps();
+                }
+
+                break;
+
+            case 'Feature':
+                // TODO
+                return;
+
+            case 'Linestring':
+                // TODO
+                return;
+        }
+    }
+
+    converterGeometryCollection(geometry: Geometry): google.maps.LatLng[] {
+        let latLngCoords: any[] = [];
+        if (geometry.geometries) {
+            geometry.geometries.forEach((geo: any) => {
+                const data = this.converterGeoJSONParaLatLng(geo);
+                latLngCoords.push(data);
+            });
+        }
+
+        return latLngCoords;
+    }
+
+    converterGeoJSONParaLatLng(geometry: Geometry): google.maps.LatLng[] {
+        switch (geometry.type) {
+            case 'Point':
+            // return new google.maps.LatLng(
+            //     geometry?.coordinates[1],
+            //     geometry?.coordinates[0]
+            // );
+
+            case 'LineString':
+                return geometry.coordinates.map(
+                    (coord: any) => new google.maps.LatLng(coord[1], coord[0])
+                );
+
+            case 'Polygon':
+                return geometry.coordinates[0].map(
+                    (coord: any) => new google.maps.LatLng(coord[1], coord[0])
+                );
+
+            case 'MultiPolygon':
+                const paths: google.maps.LatLng[] = [];
+                geometry.coordinates.forEach((coordinate: any) => {
+                    const subPaths = coordinate[0].map(
+                        (coord: any) =>
+                            new google.maps.LatLng(coord[1], coord[0])
+                    );
+                    paths.push(...subPaths);
+                });
+                return paths;
 
             default:
-              throw new Error(`Unsupported geoJSON type: ${geoJSON.type}`);
-          }
+                throw new Error(`Unsupported geometry type: ${geometry.type}`);
+        }
+    }
+
+    desenharNoMaps(): void {
+        if (this.objFeature.length) {
+            this.objFeature.forEach((obj) => {
+                obj.polygonsOptions.forEach((polyOptions) => {
+                    const poly = new google.maps.Polygon(polyOptions);
+                    poly.setMap(this.map);
+                });
+            });
+        };
     }
 }
