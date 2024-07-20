@@ -5,6 +5,17 @@
         </form>
 
         <!-- TODO: Adicionar checkboxs -->
+        <ng-container *ngFor="let polygon of polygonsLatLng">
+            <mat-checkbox
+                color="primary"
+                [checked]="true"
+                [class]="''"
+                [disabled]="false"
+                (change)="ativaDesativaPolygon($event, polygon.nome)"
+                class="text-xs">
+                {{ polygon.nome }}
+            </mat-checkbox>
+        </ng-container>
 
         <google-map
             height="100%"

@@ -6,11 +6,12 @@ import * as togpx from '@tmcw/togeojson';
 import { GoogleMapsService } from '../../../services/google-maps/google-maps.service';
 import { Feature, GeoJson, Geometry } from '../../../DTOs/geoJsonDTO';
 import { PolygonLatLng } from '../../../DTOs/polygonsLatLngDTO';
+import { SharedModule } from '../../shared/shared.module';
 
 @Component({
     selector: 'app-google-maps',
     standalone: true,
-    imports: [MapMarker, GoogleMapsModule, EditorCodigoComponent, CommonModule, ], // TODO: Criar modules só com os modulos material angular
+    imports: [MapMarker, GoogleMapsModule, EditorCodigoComponent, CommonModule, SharedModule], // TODO: Criar modules só com os modulos material angular
     templateUrl: './google-maps.component.html',
     styleUrl: './google-maps.component.scss'
 })
@@ -92,7 +93,7 @@ export class GoogleMapsComponent {
             case 'FeatureCollection':
                 const features: Feature[] | undefined = geojson.features;
                 if (features) {
-                    let data: google.maps.LatLng[] = [];
+                    let data: google.maps.LatLng[] | undefined = [];
                     features.forEach((feature) => {
                         let latLngPolygonsOptions: PolygonLatLng;
 
@@ -162,13 +163,26 @@ export class GoogleMapsComponent {
         return latLngCoords;
     }
 
-    converterGeoJSONParaLatLng(geometry: Geometry): google.maps.LatLng[] {
+    converterGeoJSONParaLatLng(geometry: Geometry): google.maps.LatLng[] | undefined {
         switch (geometry.type) {
             case 'Point':
-            // return new google.maps.LatLng(
-            //     geometry?.coordinates[1],
-            //     geometry?.coordinates[0]
-            // );
+                const coord = new google.maps.LatLng(
+                    geometry?.coordinates[1],
+                    geometry?.coordinates[0]
+                );
+
+                const marker = new google.maps.Marker({
+                    position: coord,
+                    map: this.map,
+                    title: 'Click to remove',
+                    clickable: true,
+                    label: {
+                        text: 'x',
+                        color: '#FF0000',
+                        fontSize: '16px'
+                    }
+                });
+                return
 
             case 'LineString':
                 return geometry.coordinates.map(
@@ -226,5 +240,14 @@ export class GoogleMapsComponent {
         if (this.zoom < 15) {
             this.map?.setZoom(17);
         }
+    }
+
+    ativaDesativaPolygon(event: any, nome: string): void {
+        const polygon = this.polygonsLatLng.find(poly => poly.nome === nome);
+        polygon?.polygons.forEach(poly_ => {
+            poly_.setOptions({
+                visible: event.checked,
+            })
+        })
     }
 }
