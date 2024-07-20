@@ -5,11 +5,12 @@ import { CommonModule } from '@angular/common';
 import * as togpx from '@tmcw/togeojson';
 import { GoogleMapsService } from '../../../services/google-maps/google-maps.service';
 import { Feature, GeoJson, Geometry } from '../../../DTOs/geoJsonDTO';
+import { PolygonLatLng } from '../../../DTOs/polygonsLatLngDTO';
 
 @Component({
     selector: 'app-google-maps',
     standalone: true,
-    imports: [MapMarker, GoogleMapsModule, EditorCodigoComponent, CommonModule],
+    imports: [MapMarker, GoogleMapsModule, EditorCodigoComponent, CommonModule, ], // TODO: Criar modules só com os modulos material angular
     templateUrl: './google-maps.component.html',
     styleUrl: './google-maps.component.scss'
 })
@@ -27,10 +28,7 @@ export class GoogleMapsComponent {
     };
     markers: google.maps.LatLngLiteral[] = [];
     coordenadasTipoLatLng: any = [];
-    objFeature: {
-        nome: string;
-        polygonsOptions: google.maps.PolygonOptions[];
-    }[] = [];
+    polygonsLatLng: PolygonLatLng[] = [];
 
     constructor(private googleMapsService: GoogleMapsService) {}
 
@@ -96,10 +94,7 @@ export class GoogleMapsComponent {
                 if (features) {
                     let data: google.maps.LatLng[] = [];
                     features.forEach((feature) => {
-                        let objPolygonOptions: {
-                            nome: string;
-                            polygonsOptions: google.maps.PolygonOptions[];
-                        };
+                        let latLngPolygonsOptions: PolygonLatLng;
 
                         if (feature.geometry.type !== 'GeometryCollection') {
                             const donees = this.converterGeoJSONParaLatLng(
@@ -127,17 +122,18 @@ export class GoogleMapsComponent {
                                     feature.properties['stroke-width'] || 1
                             };
 
-                            objPolygonOptions = {
+                            latLngPolygonsOptions = {
                                 nome:
                                     feature.properties['nome'] ||
                                     feature.properties['name'],
-                                polygonsOptions: []
+                                polygonsOptions: [],
+                                polygons: [],
                             };
+                            latLngPolygonsOptions.polygonsOptions.push(options);
+                            latLngPolygonsOptions.polygons.push(new google.maps.Polygon(options));
 
-                            objPolygonOptions.polygonsOptions.push(options);
-                            this.objFeature.push(objPolygonOptions);
+                            this.polygonsLatLng.push(latLngPolygonsOptions);
                         }
-
                     });
                     this.desenharNoMaps();
                 }
@@ -201,13 +197,34 @@ export class GoogleMapsComponent {
     }
 
     desenharNoMaps(): void {
-        if (this.objFeature.length) {
-            this.objFeature.forEach((obj) => {
-                obj.polygonsOptions.forEach((polyOptions) => {
-                    const poly = new google.maps.Polygon(polyOptions);
-                    poly.setMap(this.map);
+        if (this.polygonsLatLng.length) {
+            this.polygonsLatLng.forEach(obj => {
+                const polygons: google.maps.Polygon[] = [];
+                obj.polygons.forEach(polygon => {
+                    polygon.setMap(this.map);
+                    polygons.push(polygon);
                 });
+                this.pegarSetarCentro(polygons);
+            })
+        }
+    }
+
+    pegarSetarCentro(polygons: google.maps.Polygon[] | any[]): void {
+        const bounds = new google.maps.LatLngBounds();
+
+        polygons.forEach((polygon: any) => {
+            polygon.getPath().forEach((point: google.maps.LatLng) => {
+                bounds.extend(point);
             });
-        };
+        });
+
+        const centerLatLng = bounds.getCenter();
+        this.map?.setCenter(centerLatLng);
+
+        this.zoom = this.map?.getZoom() as number;
+
+        if (this.zoom < 15) {
+            this.map?.setZoom(17);
+        }
     }
 }

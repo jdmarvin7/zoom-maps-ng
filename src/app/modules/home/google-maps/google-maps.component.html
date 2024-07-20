@@ -1,8 +1,11 @@
 <div class="flex w-full h-[100vh]">
     <div id="maps" class="w-2/3 h-full relative">
-        <form>
-            <input type="file" class="absolute z-50 right-0" (change)="arquivoSelecionado($event)" #fileUpload>
+        <form class="absolute z-50 right-0">
+            <input type="file" (change)="arquivoSelecionado($event)" #fileUpload>
         </form>
+
+        <!-- TODO: Adicionar checkboxs -->
+
         <google-map
             height="100%"
             width="100%"
