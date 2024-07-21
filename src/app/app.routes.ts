@@ -6,7 +6,7 @@ export const routes: Routes = [
     loadChildren: () => import('./modules/home/home-routing.module').then(m => m.HomeRoutingModule),
   },
   {
-    path: 'home',
+    path: 'maps',
     loadComponent: () => import('./modules/home/google-maps/google-maps.component').then(m => m.GoogleMapsComponent)
   }
 ];

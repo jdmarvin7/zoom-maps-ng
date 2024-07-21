@@ -1,11 +1,14 @@
 <div class="flex w-full h-[100vh]">
-    <div id="maps" class="w-2/3 h-full relative">
-        <form class="absolute z-50 right-0">
-            <input type="file" (change)="arquivoSelecionado($event)" #fileUpload>
+    <div id="maps" class="w-2/3 h-full relative last:w-full">
+        <form class="absolute z-50 right-4 bg-blue-500">
+            <label for="arquivo" class="text-base font-bold text-white inline-block rounded p-3">
+                Clique aqui para inserir um arquivo
+            </label>
+            <input id="arquivo" class="arquivo w-[0.1px] h-[0.1px] opacity-0 overflow-hidden -z-1" type="file" (change)="arquivoSelecionado($event)" #fileUpload>
         </form>
 
         @if (abrirMinizarCheckboxs) {
-            <div class="absolute top-8 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded min-w-[250px] max-w-[450px] truncate" *ngIf="polygonsLatLng.length" cdkDrag>
+            <div class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded min-w-[250px] max-w-[450px] truncate" *ngIf="polygonsLatLng.length" cdkDrag>
                 <div class="menu w-full flex items-center justify-end" (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs">
                     <button class="text-white">
                         <i class="pi pi-times" style="font-size: 1.5rem"></i>
@@ -23,7 +26,7 @@
                 </ng-container>
             </div>
         } @else {
-            <div class="absolute top-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px]">
+            <div class="absolute top-14 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px]">
                 <button (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs" class="w-fit h-fit flex items-center cursor-pointer">
                     <i class="pi pi-plus flex items-center" style="font-size: 1.5rem"></i>
                 </button>
@@ -45,6 +48,13 @@
             (mapClick)="criarMarker($event)"
             (mapInitialized)="initMap($event)"
         >
+            @for (position of markers; track position) {
+                <map-advanced-marker
+                    #marker="mapAdvancedMarker"
+                    [position]="position"
+                    (mapClick)="criarInfoView(marker)"
+                />
+            }
         </google-map>
     </div>
     <div class="bg-red-500 h-full w-1/3">

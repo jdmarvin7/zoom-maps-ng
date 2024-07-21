@@ -9,7 +9,7 @@ const routes: Routes = [
         component: HomeComponent,
         children: [
             {
-                path: 'maps',
+                path: '',
                 component: GoogleMapsComponent,
             }
         ]

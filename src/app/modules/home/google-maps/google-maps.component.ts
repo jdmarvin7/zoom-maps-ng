@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { GoogleMapsModule, MapMarker } from '@angular/google-maps';
+import { GoogleMapsModule, MapAdvancedMarker, MapInfoWindow, MapMarker } from '@angular/google-maps';
 import { EditorCodigoComponent } from '../editor-codigo/editor-codigo.component';
 import { CommonModule } from '@angular/common';
 import * as togpx from '@tmcw/togeojson';
@@ -35,6 +35,7 @@ export class GoogleMapsComponent {
     map!: google.maps.Map;
     mapOptions: google.maps.MapOptions = {
         mapTypeId: 'satellite',
+        mapId: google.maps.MapTypeId.SATELLITE,
         mapTypeControl: false,
         fullscreenControl: false,
         streetViewControl: false,
@@ -58,6 +59,9 @@ export class GoogleMapsComponent {
     bounds!: any;
     nomeArquivo!: string;
 
+    // TODO: Criar infoview ao clicar no poligono
+    infoView!: MapInfoWindow | undefined;
+
     constructor(
         private googleMapsService: GoogleMapsService,
         private formatStr: FormatarStringPipe,
@@ -67,6 +71,10 @@ export class GoogleMapsComponent {
 
     initMap(map: google.maps.Map): void {
         this.map = map;
+        this.desenharNoMapa();
+        this.router.navigate([], {
+            relativeTo: this.route,
+        })
     }
 
     criarMarker(event: google.maps.MapMouseEvent): void {
@@ -116,6 +124,10 @@ export class GoogleMapsComponent {
                     const geojson = JSON.parse(conteudo as string);
                     this.geoToLatLng(geojson as GeoJson);
                     this.googleMapsService.setarGeoJson(geojson as string);
+                    break;
+
+                default:
+                    throw new Error("Não suportamos esse arquivo ainda! "+ tipoDoArquivo)
             }
         };
         reader.readAsText(file);
@@ -360,5 +372,38 @@ export class GoogleMapsComponent {
                 lng,
             }
         })
+    }
+
+    criarInfoView(marker: MapAdvancedMarker): void {
+        marker.options = {
+            title: 'Teste'
+        }
+    }
+
+    desenharNoMapa(): void {
+        const drawingManager = new google.maps.drawing.DrawingManager({
+            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingControl: true,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.BOTTOM_LEFT,
+                drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+            },
+            polygonOptions: {
+                editable: true,
+            }
+        });
+        drawingManager.setMap(this.map);
+
+        // Use addEventListener instead of the deprecated addDomListener
+        drawingManager.addListener("overlaycomplete", (event: any) => {
+            const shape = event.overlay;
+            shape.type = event.type;
+        });
+
+        // Removed the unused event parameter
+        drawingManager.addListener("overlaycomplete", function() {
+            // overlayClickListener(event.overlay);
+            // $('#vertices').val(event.overlay.getPath().getArray());
+        });
     }
 }
