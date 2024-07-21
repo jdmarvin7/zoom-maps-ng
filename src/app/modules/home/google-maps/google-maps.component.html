@@ -4,19 +4,36 @@
             <input type="file" (change)="arquivoSelecionado($event)" #fileUpload>
         </form>
 
-        <!-- TODO: Adicionar checkboxs -->
-        <div class="absolute bottom-0 z-50 flex flex-col gap-1 bg-blue-500 px-4 py-2 rounded-2xl" *ngIf="polygonsLatLng.length">
-            <ng-container *ngFor="let polygon of polygonsLatLng">
-                <mat-checkbox
-                    color="primary"
-                    [checked]="true"
-                    [class]="''"
-                    [disabled]="false"
-                    (change)="ativaDesativaPolygon($event, polygon.nome)"
-                    class="text-xs">
-                    {{ polygon.nome }}
-                </mat-checkbox>
-            </ng-container>
+        @if (abrirMinizarCheckboxs) {
+            <div class="absolute top-8 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded min-w-[250px] max-w-[450px] truncate" *ngIf="polygonsLatLng.length" cdkDrag>
+                <div class="menu w-full flex items-center justify-end" (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs">
+                    <button class="text-white">
+                        <i class="pi pi-times" style="font-size: 1.5rem"></i>
+                    </button>
+                </div>
+                <ng-container *ngFor="let polygon of polygonsLatLng">
+                    <mat-checkbox
+                        color="primary"
+                        [checked]="polygon.visualizacao"
+                        [class]="''"
+                        [disabled]="false"
+                        (change)="ativaDesativaPolygon($event, polygon.nome)">
+                        <p class="text-xs break-words flex items-center justify-center">{{ polygon.nome }}</p>
+                    </mat-checkbox>
+                </ng-container>
+            </div>
+        } @else {
+            <div class="absolute top-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px]">
+                <button (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs" class="w-fit h-fit flex items-center cursor-pointer">
+                    <i class="pi pi-plus flex items-center" style="font-size: 1.5rem"></i>
+                </button>
+            </div>
+        }
+
+        <div class="absolute bottom-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px] cursor-pointer">
+            <button (click)="centralizarMaps()" class="w-fit h-fit flex items-center">
+                <i class="pi pi-map-marker flex items-center" style="font-size: 1.5rem"></i>
+            </button>
         </div>
 
         <google-map
@@ -24,6 +41,7 @@
             width="100%"
             [center]="center"
             [zoom]="zoom"
+            [options]="mapOptions"
             (mapClick)="criarMarker($event)"
             (mapInitialized)="initMap($event)"
         >

@@ -7,11 +7,25 @@ import { GoogleMapsService } from '../../../services/google-maps/google-maps.ser
 import { Feature, GeoJson, Geometry } from '../../../DTOs/geoJsonDTO';
 import { PolygonLatLng } from '../../../DTOs/polygonsLatLngDTO';
 import { SharedModule } from '../../shared/shared.module';
+import { CdkDrag } from '@angular/cdk/drag-drop';
+import { FormatarStringPipe } from '../../../pipes/formatar-string.pipe';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'app-google-maps',
     standalone: true,
-    imports: [MapMarker, GoogleMapsModule, EditorCodigoComponent, CommonModule, SharedModule], // TODO: Criar modules só com os modulos material angular
+    imports: [
+        MapMarker,
+        GoogleMapsModule,
+        EditorCodigoComponent,
+        CommonModule,
+        SharedModule,
+        CdkDrag,
+        FormatarStringPipe
+    ], // TODO: Criar modules só com os modulos material angular
+    providers: [
+        FormatarStringPipe,
+    ],
     templateUrl: './google-maps.component.html',
     styleUrl: './google-maps.component.scss'
 })
@@ -19,6 +33,15 @@ export class GoogleMapsComponent {
     @ViewChild('map') mapContainer!: ElementRef;
 
     map!: google.maps.Map;
+    mapOptions: google.maps.MapOptions = {
+        mapTypeId: 'satellite',
+        mapTypeControl: false,
+        fullscreenControl: false,
+        streetViewControl: false,
+        scaleControl: false,
+        zoomControl: false,
+        disableDoubleClickZoom: false,
+    }
     center: google.maps.LatLngLiteral = {
         lat: -14.235004,
         lng: -51.92528
@@ -31,7 +54,16 @@ export class GoogleMapsComponent {
     coordenadasTipoLatLng: any = [];
     polygonsLatLng: PolygonLatLng[] = [];
 
-    constructor(private googleMapsService: GoogleMapsService) {}
+    abrirMinizarCheckboxs: boolean = true;
+    bounds!: any;
+    nomeArquivo!: string;
+
+    constructor(
+        private googleMapsService: GoogleMapsService,
+        private formatStr: FormatarStringPipe,
+        private route: ActivatedRoute,
+        private router: Router,
+    ) {}
 
     initMap(map: google.maps.Map): void {
         this.map = map;
@@ -63,14 +95,20 @@ export class GoogleMapsComponent {
     }
 
     getFileContent(file: File): void {
+        this.limparMaps();
+
         const reader = new FileReader();
         const tipoDoArquivo = file.name.split('.')[1];
+        this.nomeArquivo = file.name.split('.')[0];
+
         reader.onload = (event) => {
-            const conteudo = event.target?.result as string | GeoJson ;
+            const conteudo = event.target?.result as string | GeoJson;
             switch (tipoDoArquivo) {
                 case 'kml':
-                    const geo = this.converterKmlparaGeoJSON(conteudo as string);
-                    this.geoToLatLng(geo as GeoJson)
+                    const geo = this.converterKmlparaGeoJSON(
+                        conteudo as string
+                    );
+                    this.geoToLatLng(geo as GeoJson);
                     this.googleMapsService.setarGeoJson(geo);
                     break;
 
@@ -78,7 +116,6 @@ export class GoogleMapsComponent {
                     const geojson = JSON.parse(conteudo as string);
                     this.geoToLatLng(geojson as GeoJson);
                     this.googleMapsService.setarGeoJson(geojson as string);
-
             }
         };
         reader.readAsText(file);
@@ -106,7 +143,12 @@ export class GoogleMapsComponent {
                 if (features) {
                     let data: google.maps.LatLng[] | undefined = [];
                     features.forEach((feature) => {
-                        let latLngPolygonsOptions: PolygonLatLng;
+                        let latLngPolygonsOptions: PolygonLatLng = {
+                            nome: '',
+                            visualizacao: true,
+                            polygonsOptions: [],
+                            polygons: [],
+                        };
 
                         if (feature.geometry.type !== 'GeometryCollection') {
                             const donees = this.converterGeoJSONParaLatLng(
@@ -134,17 +176,32 @@ export class GoogleMapsComponent {
                                     feature.properties['stroke-width'] || 1
                             };
 
-                            latLngPolygonsOptions = {
-                                nome:
-                                    feature.properties['nome'] ||
-                                    feature.properties['name'],
-                                polygonsOptions: [],
-                                polygons: [],
-                            };
-                            latLngPolygonsOptions.polygonsOptions.push(options);
-                            latLngPolygonsOptions.polygons.push(new google.maps.Polygon(options));
+                            const nome = this.formatStr.transform(
+                                feature.properties['nome'] || feature.properties['name']
+                            ) as string;
 
-                            this.polygonsLatLng.push(latLngPolygonsOptions);
+                            let jaExisteNome = this.polygonsLatLng.find(
+                                (obj) => obj.nome === nome
+                            );
+
+                            if (!jaExisteNome) {
+                                latLngPolygonsOptions = {
+                                    nome: nome,
+                                    visualizacao: true,
+                                    polygonsOptions: [],
+                                    polygons: [],
+                                };
+                                this.polygonsLatLng.push(latLngPolygonsOptions);
+                                jaExisteNome = latLngPolygonsOptions; // Update the reference to the new object
+                            }
+
+                            jaExisteNome.polygonsOptions.push(options);
+                            jaExisteNome.polygons.push(new google.maps.Polygon(options));
+
+                            // Update existing object in polygonsLatLng
+                            this.polygonsLatLng = this.polygonsLatLng.map((obj) =>
+                                obj.nome === nome ? jaExisteNome : obj
+                            );
                         }
                     });
                     this.desenharNoMaps();
@@ -174,7 +231,9 @@ export class GoogleMapsComponent {
         return latLngCoords;
     }
 
-    converterGeoJSONParaLatLng(geometry: Geometry): google.maps.LatLng[] | undefined {
+    converterGeoJSONParaLatLng(
+        geometry: Geometry
+    ): google.maps.LatLng[] | undefined {
         switch (geometry.type) {
             case 'Point':
                 const coord = new google.maps.LatLng(
@@ -193,7 +252,7 @@ export class GoogleMapsComponent {
                         fontSize: '16px'
                     }
                 });
-                return
+                return;
 
             case 'LineString':
                 return geometry.coordinates.map(
@@ -223,16 +282,22 @@ export class GoogleMapsComponent {
 
     desenharNoMaps(): void {
         if (this.polygonsLatLng.length) {
-            this.polygonsLatLng.forEach(obj => {
+            this.polygonsLatLng.forEach((obj) => {
                 const polygons: google.maps.Polygon[] = [];
-                obj.polygons.forEach(polygon => {
+                obj.polygons.forEach((polygon) => {
                     polygon.setMap(this.map);
+
+                    polygon.addListener('click', () => {
+                        console.log(polygon);
+                    });
                     polygons.push(polygon);
                 });
                 this.pegarSetarCentro(polygons);
-            })
+            });
         }
     }
+
+    juntarAreasIguaisComNomesDiferentes(): void {}
 
     pegarSetarCentro(polygons: google.maps.Polygon[] | any[]): void {
         const bounds = new google.maps.LatLngBounds();
@@ -243,8 +308,11 @@ export class GoogleMapsComponent {
             });
         });
 
-        const centerLatLng = bounds.getCenter();
-        this.map?.setCenter(centerLatLng);
+        // TODO: Adicionar o "lat" e "lng" do centro dos poligonos na url da aplicação.
+        // se tiver já tiver no query centralizar ao inicializar o camponente.
+        this.bounds = bounds.getCenter();
+        this.map?.setCenter(this.bounds);
+        this.navegarParaLatLngCentralizador();
 
         this.zoom = this.map?.getZoom() as number;
 
@@ -254,11 +322,43 @@ export class GoogleMapsComponent {
     }
 
     ativaDesativaPolygon(event: any, nome: string): void {
-        const polygon = this.polygonsLatLng.find(poly => poly.nome === nome);
-        polygon?.polygons.forEach(poly_ => {
+        const polygon = this.polygonsLatLng.find((poly) => poly.nome === nome);
+
+        polygon?.polygons.forEach((poly_) => {
             poly_.setOptions({
-                visible: event.checked,
-            })
+                visible: event.checked
+            });
+            if (polygon) {
+                polygon.visualizacao = poly_.getVisible() as boolean;
+            }
+        });
+    }
+
+    limparMaps(): void {
+        this.polygonsLatLng.forEach((polygon: PolygonLatLng) => {
+            polygon.polygons.forEach((poly_) => {
+                poly_.setMap(null);
+            });
+        });
+        this.polygonsLatLng = [];
+    }
+
+    // TODO: Criar um botão no maps chamado centralizar para que a gente consiga centralizar nas coordenadas importadas pelo user.
+    centralizarMaps(): void {
+        this.map?.setCenter(this.bounds);
+        this.map?.setZoom(17);
+    }
+
+    navegarParaLatLngCentralizador(): void {
+        const lat = this.bounds.lat();
+        const lng = this.bounds.lng();
+
+        this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {
+                lat,
+                lng,
+            }
         })
     }
 }
