@@ -64,11 +64,22 @@ export class GoogleMapsComponent {
 
     getFileContent(file: File): void {
         const reader = new FileReader();
+        const tipoDoArquivo = file.name.split('.')[1];
         reader.onload = (event) => {
-            const kmlString = event.target?.result as string;
-            const geo = this.converterKmlparaGeoJSON(kmlString);
-            this.googleMapsService.setarGeoJson(geo);
-            const latLng = this.geoToLatLng(geo);
+            const conteudo = event.target?.result as string | GeoJson ;
+            switch (tipoDoArquivo) {
+                case 'kml':
+                    const geo = this.converterKmlparaGeoJSON(conteudo as string);
+                    this.geoToLatLng(geo as GeoJson)
+                    this.googleMapsService.setarGeoJson(geo);
+                    break;
+
+                case 'geojson':
+                    const geojson = JSON.parse(conteudo as string);
+                    this.geoToLatLng(geojson as GeoJson);
+                    this.googleMapsService.setarGeoJson(geojson as string);
+
+            }
         };
         reader.readAsText(file);
     }

@@ -47,7 +47,7 @@ export interface MultiLinestring extends Geometry {
 
 export interface Polygon extends Geometry {
     type: 'Polygon';
-    coordinates: [number, number][][]; // Polygons can have multiple rings
+    coordinates: [number, number][][];
 }
 
 export interface MultiPolygon extends Geometry {
