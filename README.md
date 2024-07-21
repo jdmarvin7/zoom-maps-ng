@@ -11,11 +11,11 @@ e práticar mais conceitos do angular e do `@angular/google-maps`.
 
 ## Setup do projeto
 
-primeiro clonar o projeto
-`git clone https://github.com/jdmarvin7/zoom-maps-ng.git`
+Primeiro clonar o projeto
+    `git clone https://github.com/jdmarvin7/zoom-maps-ng.git`
 
-abrir no seu IDE
-depois de abrir rodar o comando `npm i` para baixar as dependencias do projeto;
+Abrir no seu IDE
+    depois de abrir rodar o comando `npm i` para baixar as dependencias do projeto;
 
 Adicionar uma chave do google maps
-em `index.html` adicionar a sua chave do google maps
+    em `index.html` adicionar a sua chave do google maps
