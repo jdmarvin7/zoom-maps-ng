@@ -1,41 +1,87 @@
 <div class="flex w-full h-[100vh]">
     <div id="maps" class="w-2/3 h-full relative last:w-full">
         <form class="absolute z-50 right-4 bg-blue-500">
-            <label for="arquivo" class="text-base font-bold text-white inline-block rounded p-3">
+            <label
+                for="arquivo"
+                class="text-base font-bold text-white inline-block rounded p-3"
+            >
                 Clique aqui para inserir um arquivo
             </label>
-            <input id="arquivo" class="arquivo w-[0.1px] h-[0.1px] opacity-0 overflow-hidden -z-1" type="file" (change)="arquivoSelecionado($event)" #fileUpload>
+            <input
+                id="arquivo"
+                class="arquivo w-[0.1px] h-[0.1px] opacity-0 overflow-hidden -z-1"
+                type="file"
+                (change)="arquivoSelecionado($event)"
+                #fileUpload
+            />
         </form>
 
         @if (abrirMinizarCheckboxs) {
-            <div class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded min-w-[250px] max-w-[450px] truncate" *ngIf="polygonsLatLng.length" cdkDrag>
-                <div class="menu w-full flex items-center justify-end" (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs">
-                    <button class="text-white">
-                        <i class="pi pi-times" style="font-size: 1.5rem"></i>
-                    </button>
-                </div>
-                <ng-container *ngFor="let polygon of polygonsLatLng">
-                    <mat-checkbox
-                        color="primary"
-                        [checked]="polygon.visualizacao"
-                        [class]="''"
-                        [disabled]="false"
-                        (change)="ativaDesativaPolygon($event, polygon.nome)">
-                        <p class="text-xs break-words flex items-center justify-center">{{ polygon.nome }}</p>
-                    </mat-checkbox>
-                </ng-container>
+        <div
+            class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded min-w-[250px] max-w-[450px] truncate"
+            *ngIf="polygonsLatLng.length"
+            cdkDrag
+        >
+            <div class="example-handle" cdkDragHandle *ngIf="false">
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                    ></path>
+                    <path d="M0 0h24v24H0z" fill="none"></path>
+                </svg>
             </div>
-        } @else {
-            <div class="absolute top-14 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px]">
-                <button (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs" class="w-fit h-fit flex items-center cursor-pointer">
-                    <i class="pi pi-plus flex items-center" style="font-size: 1.5rem"></i>
+
+            <div
+                class="menu w-full flex items-center justify-end"
+                (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs"
+            >
+                <button class="text-white">
+                    <i class="pi pi-times" style="font-size: 1.5rem"></i>
                 </button>
             </div>
+            <ng-container *ngFor="let polygon of polygonsLatLng">
+                <mat-checkbox
+                    color="primary"
+                    [checked]="polygon.visualizacao"
+                    [class]="''"
+                    [disabled]="false"
+                    (change)="ativaDesativaPolygon($event, polygon.nome)"
+                >
+                    <p
+                        class="text-xs break-words flex items-center justify-center"
+                    >
+                        {{ polygon.nome }}
+                    </p>
+                </mat-checkbox>
+            </ng-container>
+        </div>
+        } @else {
+        <div
+            class="absolute top-14 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px]"
+        >
+            <button
+                (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs"
+                class="w-fit h-fit flex items-center cursor-pointer"
+            >
+                <i
+                    class="pi pi-plus flex items-center"
+                    style="font-size: 1.5rem"
+                ></i>
+            </button>
+        </div>
         }
 
-        <div class="absolute bottom-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px] cursor-pointer">
-            <button (click)="centralizarMaps()" class="w-fit h-fit flex items-center">
-                <i class="pi pi-map-marker flex items-center" style="font-size: 1.5rem"></i>
+        <div
+            class="absolute bottom-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px] cursor-pointer"
+        >
+            <button
+                (click)="centralizarMaps()"
+                class="w-fit h-fit flex items-center"
+            >
+                <i
+                    class="pi pi-map-marker flex items-center"
+                    style="font-size: 1.5rem"
+                ></i>
             </button>
         </div>
 
@@ -49,11 +95,11 @@
             (mapInitialized)="initMap($event)"
         >
             @for (position of markers; track position) {
-                <map-advanced-marker
-                    #marker="mapAdvancedMarker"
-                    [position]="position"
-                    (mapClick)="criarInfoView(marker)"
-                />
+            <map-advanced-marker
+                #marker="mapAdvancedMarker"
+                [position]="position"
+                (mapClick)="criarInfoView(marker)"
+            />
             }
         </google-map>
     </div>

@@ -394,13 +394,11 @@ export class GoogleMapsComponent {
         });
         drawingManager.setMap(this.map);
 
-        // Use addEventListener instead of the deprecated addDomListener
         drawingManager.addListener("overlaycomplete", (event: any) => {
             const shape = event.overlay;
             shape.type = event.type;
         });
 
-        // Removed the unused event parameter
         drawingManager.addListener("overlaycomplete", function() {
             // overlayClickListener(event.overlay);
             // $('#vertices').val(event.overlay.getPath().getArray());
