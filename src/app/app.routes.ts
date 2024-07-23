@@ -3,7 +3,8 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    loadChildren: () => import('./modules/home/home-routing.module').then(m => m.HomeRoutingModule),
+    redirectTo: 'maps',
+    pathMatch: 'full'
   },
   {
     path: 'maps',
@@ -11,6 +12,7 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    loadChildren: () => import('./modules/home/google-maps/google-maps.component').then(c => c.GoogleMapsComponent)
+    redirectTo: 'maps',
+    pathMatch: 'full'
   }
 ];
