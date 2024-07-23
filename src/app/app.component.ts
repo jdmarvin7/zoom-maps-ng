@@ -1,8 +1,7 @@
-import { environment } from './environments/environments';
 import { DOCUMENT } from '@angular/common';
-import { Component, Inject, OnInit, Renderer2, isDevMode } from '@angular/core';
+import { Component, Inject, OnInit, Renderer2 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { environment as prd } from './environments/environment.prod';
+import { environment } from './environments/environment';
 
 @Component({
     selector: 'app-root',
@@ -11,22 +10,15 @@ import { environment as prd } from './environments/environment.prod';
     template: '<router-outlet></router-outlet>'
 })
 export class AppComponent implements OnInit {
-    token: string = ''
     constructor(
         private renderer: Renderer2,
         @Inject(DOCUMENT) private document: Document,
     ) {}
 
     ngOnInit(): void {
-        if (isDevMode()) {
-            console.log("Tamo na dev");
-            this.token = environment.googleApiKey;
-        } else {
-            this.token = prd.googleApiKey;
-        }
         const script = this.document.createElement('script');
         script.type = 'text/javascript';
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.token}&libraries=drawing`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleApiKey}&libraries=drawing`;
         script.async = true;
         this.renderer.appendChild(this.document.head, script);
     }
