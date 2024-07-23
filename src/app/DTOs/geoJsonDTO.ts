@@ -15,7 +15,7 @@ export interface Feature {
 }
 
 export interface Geometry {
-    type: string;
+    type: 'Polygon' | 'MultiPolygon' | 'GeometryCollection' | 'Point' | 'MultiPoint' | 'LineString' | 'MultiLineString';
     coordinates?: any
     geometries?: GeometryCollection[];
 }
@@ -40,8 +40,8 @@ export interface LineString extends Geometry {
     coordinates: [number, number][];
 }
 
-export interface MultiLinestring extends Geometry {
-    type: 'MultiLinestring';
+export interface MultiLineString extends Geometry {
+    type: 'MultiLineString';
     coordinates: [number, number][][];
 }
 

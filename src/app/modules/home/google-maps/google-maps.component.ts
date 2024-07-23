@@ -15,6 +15,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { CdkDrag } from '@angular/cdk/drag-drop';
 import { FormatarStringPipe } from '../../../pipes/formatar-string.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PolygonParaGeoJSONFeature } from '../../../utils/polygonParaGeoJSONFeature';
 
 @Component({
     selector: 'app-google-maps',
@@ -397,7 +398,10 @@ export class GoogleMapsComponent {
                 position: google.maps.ControlPosition.BOTTOM_LEFT,
                 drawingModes: [
                     google.maps.drawing.OverlayType.POLYGON,
-                    google.maps.drawing.OverlayType.CIRCLE
+                    google.maps.drawing.OverlayType.CIRCLE,
+                    google.maps.drawing.OverlayType.MARKER,
+                    google.maps.drawing.OverlayType.POLYLINE,
+                    google.maps.drawing.OverlayType.RECTANGLE
                 ]
             },
             polygonOptions: {
@@ -415,8 +419,11 @@ export class GoogleMapsComponent {
             // google.maps.event.addListener(event.overlay, "mouseup", (event_: any) => {
             //     // console.log(event_)
             // });
+            const polygon = event.overlay;
+            let nome = '';
+
             const options = {
-                paths: event.overlay.getPath(),
+                paths: polygon.getPath(),
                 fillColor: '#5555FF',
                 strokeColor: '#FFFF00',
                 fillOpacity: 0.34901960784313724,
@@ -425,16 +432,31 @@ export class GoogleMapsComponent {
                 visible: true
             }
 
-            const polygon = event.overlay;
             polygon.setOptions(options);
+            this.polygonParaFeature(polygon, options)
 
             this.polygonsLatLng.unshift({
-                nome: 'desenho',
+                nome,
                 polygons: [polygon],
                 polygonsOptions: [options],
-                visualizacao: false
+                visualizacao: true,
             });
             debugger;
         });
+    }
+
+    polygonParaFeature(polygon: google.maps.Polygon, properties: any): void {
+        const feature = PolygonParaGeoJSONFeature.converte(polygon, properties);
+        let geoJsonAtual!: any;
+        this.googleMapsService.pegarGeoJson().subscribe({
+            next: data => geoJsonAtual = data,
+        });
+
+        const geoJsonAtualJson: any = geoJsonAtual as GeoJson;
+        if (geoJsonAtualJson && geoJsonAtualJson['features']) {
+            geoJsonAtualJson['features'].unshift(feature);
+        }
+        const geoJsonAtualizado = geoJsonAtualJson;
+        this.googleMapsService.setarGeoJson(geoJsonAtualizado as string);
     }
 }
