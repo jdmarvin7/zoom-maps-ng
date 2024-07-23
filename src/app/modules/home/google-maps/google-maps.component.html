@@ -1,6 +1,16 @@
-<div class="flex w-full h-[100vh]">
+<div class="relative flex w-full h-[100vh]">
+    <div class="config absolute right-6 top-4 z-10">
+        <button
+            class="text-white"
+            [matMenuTriggerFor]="menu"
+            aria-label="Example icon-button with a menu"
+        >
+            <i class="pi pi-cog" style="font-size: 1.5rem"></i>
+        </button>
+    </div>
     <div id="maps" class="w-2/3 h-full relative last:w-full">
-        <form class="absolute z-50 right-4 bg-blue-500"> <!-- top-4 rounded -->
+        <form class="absolute z-50 right-4 bg-cyan-500 rounded">
+            <!-- top-4 rounded -->
             <label
                 for="arquivo"
                 class="text-base font-bold text-white inline-block rounded p-3"
@@ -18,7 +28,7 @@
 
         @if (abrirMinizarCheckboxs) {
         <div
-            class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded w-fit max-w-[450px] truncate"
+            class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-cyan-500 p-3 rounded w-fit max-w-[450px] truncate"
             *ngIf="polygonsLatLng.length"
             cdkDrag
         >
@@ -57,7 +67,7 @@
         </div>
         } @else {
         <div
-            class="absolute top-14 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px]"
+            class="absolute top-14 right-4 z-50 flex justify-center items-center text-white gap-1 bg-cyan-500 p-4 rounded-[100px]"
         >
             <button
                 (click)="abrirMinizarCheckboxs = !abrirMinizarCheckboxs"
@@ -72,7 +82,7 @@
         }
 
         <div
-            class="absolute bottom-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-blue-500 p-4 rounded-[100px] cursor-pointer"
+            class="absolute bottom-8 right-4 z-50 flex justify-center items-center text-white gap-1 bg-cyan-500 p-4 rounded-[100px] cursor-pointer"
         >
             <button
                 (click)="centralizarMaps()"
@@ -107,3 +117,22 @@
         <app-editor-codigo [classes]="'w-full h-full'"></app-editor-codigo>
     </div>
 </div>
+
+<mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="openDialog()">
+        <mat-icon> vpn_key</mat-icon>
+        <span>Insere o seu token do google maps</span>
+    </button>
+    <button mat-menu-item *ngIf="false">
+        <mat-icon>dialpad</mat-icon>
+        <span>Redial</span>
+    </button>
+    <button mat-menu-item disabled *ngIf="false">
+        <mat-icon>voicemail</mat-icon>
+        <span>Check voice mail</span>
+    </button>
+    <button mat-menu-item *ngIf="false">
+        <mat-icon>notifications_off</mat-icon>
+        <span>Disable alerts</span>
+    </button>
+</mat-menu>

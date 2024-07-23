@@ -7,6 +7,10 @@ export const routes: Routes = [
   },
   {
     path: 'maps',
-    loadComponent: () => import('./modules/home/google-maps/google-maps.component').then(m => m.GoogleMapsComponent)
+    loadComponent: () => import('./modules/home/google-maps/google-maps.component').then(c => c.GoogleMapsComponent)
+  },
+  {
+    path: '**',
+    loadChildren: () => import('./modules/home/google-maps/google-maps.component').then(c => c.GoogleMapsComponent)
   }
 ];

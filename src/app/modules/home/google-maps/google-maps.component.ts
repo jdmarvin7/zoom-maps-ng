@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Inject, inject, model, Renderer2, ViewChild } from '@angular/core';
 import {
     GoogleMapsModule,
     MapAdvancedMarker,
@@ -6,7 +6,7 @@ import {
     MapMarker
 } from '@angular/google-maps';
 import { EditorCodigoComponent } from '../editor-codigo/editor-codigo.component';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import * as togpx from '@tmcw/togeojson';
 import { GoogleMapsService } from '../../../services/google-maps/google-maps.service';
 import { Feature, GeoJson, Geometry } from '../../../DTOs/geoJsonDTO';
@@ -16,6 +16,8 @@ import { CdkDrag } from '@angular/cdk/drag-drop';
 import { FormatarStringPipe } from '../../../pipes/formatar-string.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PolygonParaGeoJSONFeature } from '../../../utils/polygonParaGeoJSONFeature';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { GoogleMapsTokenComponent } from '../../config/google-maps-token/google-maps-token.component';
 
 @Component({
     selector: 'app-google-maps',
@@ -67,12 +69,20 @@ export class GoogleMapsComponent {
     // TODO: Criar infoview ao clicar no poligono
     infoView!: MapInfoWindow | undefined;
 
-    constructor(
-        private googleMapsService: GoogleMapsService,
-        private formatStr: FormatarStringPipe,
-        private route: ActivatedRoute,
-        private router: Router
-    ) {}
+    // token
+    // readonly animal = signal('');
+    readonly token = model('');
+    readonly dialog = inject(MatDialog);
+
+        constructor(
+            private googleMapsService: GoogleMapsService,
+            private formatStr: FormatarStringPipe,
+            private route: ActivatedRoute,
+            private router: Router,
+            private renderer: Renderer2,
+            @Inject(DOCUMENT) private document: Document,
+            private cdr: ChangeDetectorRef,
+        ) {}
 
     initMap(map: google.maps.Map): void {
         this.map = map;
@@ -197,7 +207,8 @@ export class GoogleMapsComponent {
 
                             const nome = this.formatStr.transform(
                                 feature.properties['nome'] ||
-                                    feature.properties['name']
+                                    feature.properties['name'] ||
+                                    'N/A'
                             ) as string;
 
                             let jaExisteNome = this.polygonsLatLng.find(
@@ -458,5 +469,51 @@ export class GoogleMapsComponent {
         }
         const geoJsonAtualizado = geoJsonAtualJson;
         this.googleMapsService.setarGeoJson(geoJsonAtualizado as string);
+    }
+
+
+    openDialog(): void {
+        const dialogRef = this.dialog.open(GoogleMapsTokenComponent, {
+            data: { token: this.token() },
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            console.log("Esse modol foi fechado");
+
+            if (result !== undefined) {
+                this.token.set(result);
+                // this.atualizarToken(this.token());
+            }
+        })
+    }
+
+    atualizarToken(token: string): void {
+        const oldScript = this.document.querySelector(`script[src^="https://maps.googleapis.com/maps/api/js?key="]`);
+
+        if (oldScript) {
+            oldScript.parentNode?.removeChild(oldScript);
+        }
+
+        // const script = this.document.createElement('script');
+        // script.type = 'text/javascript';
+        // script.src = `https://maps.googleapis.com/maps/api/js?key=${token}&libraries=drawing`;
+        // script.async = true;
+        // this.renderer.appendChild(this.document.head, script);
+
+        new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${token}&libraries=drawing`;
+            script.async = true;
+            script.onload = () => {
+                console.log('Google Maps script loaded successfully.');
+                resolve('');
+            };
+            script.onerror = () => {
+                console.error('Error loading Google Maps script.');
+                reject(new Error('Error loading Google Maps script.'));
+            };
+            this.renderer.appendChild(this.document.head, script);
+        });
     }
 }

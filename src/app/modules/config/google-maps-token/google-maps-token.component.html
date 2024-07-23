@@ -1,0 +1,12 @@
+<h2 mat-dialog-title class="text-sm font-bold">Insira o seu token do google maps para começar a usar o sistema!</h2>
+<mat-dialog-content>
+  <!-- <p>Digite aqui:</p> -->
+  <mat-form-field class="w-full">
+    <mat-label>Digite o seu token</mat-label>
+    <input matInput [(ngModel)]="token" />
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancelar</button>
+  <button mat-button [mat-dialog-close]="token()" cdkFocusInitial>Inserir</button>
+</mat-dialog-actions>
