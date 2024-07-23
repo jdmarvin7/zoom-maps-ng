@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "node -r dotenv/config setup-env.js && ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -24,6 +24,7 @@
     "@tmcw/togeojson": "^5.8.1",
     "@types/google.maps": "^3.55.11",
     "ace-builds": "^1.35.3",
+    "dotenv": "^16.4.5",
     "ngx-ace-wrapper": "^17.0.0",
     "primeicons": "^7.0.0",
     "rxjs": "~7.8.0",
