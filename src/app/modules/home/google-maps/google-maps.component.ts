@@ -211,7 +211,7 @@ export class GoogleMapsComponent {
                                     polygons: []
                                 };
                                 this.polygonsLatLng.push(latLngPolygonsOptions);
-                                jaExisteNome = latLngPolygonsOptions; // Update the reference to the new object
+                                jaExisteNome = latLngPolygonsOptions;
                             }
 
                             jaExisteNome.polygonsOptions.push(options);
@@ -219,7 +219,6 @@ export class GoogleMapsComponent {
                                 new google.maps.Polygon(options)
                             );
 
-                            // Update existing object in polygonsLatLng
                             this.polygonsLatLng = this.polygonsLatLng.map(
                                 (obj) =>
                                     obj.nome === nome ? jaExisteNome : obj
