@@ -18,7 +18,7 @@
 
         @if (abrirMinizarCheckboxs) {
         <div
-            class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded min-w-[250px] max-w-[450px] truncate"
+            class="absolute top-14 right-4 z-50 flex flex-col gap-1 bg-blue-500 p-3 rounded w-fit max-w-[450px] truncate"
             *ngIf="polygonsLatLng.length"
             cdkDrag
         >
@@ -43,7 +43,7 @@
                 <mat-checkbox
                     color="primary"
                     [checked]="polygon.visualizacao"
-                    [class]="''"
+                    [class]="'w-[350px]'"
                     [disabled]="false"
                     (change)="ativaDesativaPolygon($event, polygon.nome)"
                 >

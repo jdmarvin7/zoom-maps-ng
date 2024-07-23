@@ -1,5 +1,10 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { GoogleMapsModule, MapAdvancedMarker, MapInfoWindow, MapMarker } from '@angular/google-maps';
+import {
+    GoogleMapsModule,
+    MapAdvancedMarker,
+    MapInfoWindow,
+    MapMarker
+} from '@angular/google-maps';
 import { EditorCodigoComponent } from '../editor-codigo/editor-codigo.component';
 import { CommonModule } from '@angular/common';
 import * as togpx from '@tmcw/togeojson';
@@ -23,9 +28,7 @@ import { ActivatedRoute, Router } from '@angular/router';
         CdkDrag,
         FormatarStringPipe
     ], // TODO: Criar modules só com os modulos material angular
-    providers: [
-        FormatarStringPipe,
-    ],
+    providers: [FormatarStringPipe],
     templateUrl: './google-maps.component.html',
     styleUrl: './google-maps.component.scss'
 })
@@ -41,8 +44,8 @@ export class GoogleMapsComponent {
         streetViewControl: false,
         scaleControl: false,
         zoomControl: false,
-        disableDoubleClickZoom: false,
-    }
+        disableDoubleClickZoom: false
+    };
     center: google.maps.LatLngLiteral = {
         lat: -14.235004,
         lng: -51.92528
@@ -66,15 +69,15 @@ export class GoogleMapsComponent {
         private googleMapsService: GoogleMapsService,
         private formatStr: FormatarStringPipe,
         private route: ActivatedRoute,
-        private router: Router,
+        private router: Router
     ) {}
 
     initMap(map: google.maps.Map): void {
         this.map = map;
         this.desenharNoMapa();
         this.router.navigate([], {
-            relativeTo: this.route,
-        })
+            relativeTo: this.route
+        });
     }
 
     criarMarker(event: google.maps.MapMouseEvent): void {
@@ -127,7 +130,9 @@ export class GoogleMapsComponent {
                     break;
 
                 default:
-                    throw new Error("Não suportamos esse arquivo ainda! "+ tipoDoArquivo)
+                    throw new Error(
+                        'Não suportamos esse arquivo ainda! ' + tipoDoArquivo
+                    );
             }
         };
         reader.readAsText(file);
@@ -159,7 +164,7 @@ export class GoogleMapsComponent {
                             nome: '',
                             visualizacao: true,
                             polygonsOptions: [],
-                            polygons: [],
+                            polygons: []
                         };
 
                         if (feature.geometry.type !== 'GeometryCollection') {
@@ -189,7 +194,8 @@ export class GoogleMapsComponent {
                             };
 
                             const nome = this.formatStr.transform(
-                                feature.properties['nome'] || feature.properties['name']
+                                feature.properties['nome'] ||
+                                    feature.properties['name']
                             ) as string;
 
                             let jaExisteNome = this.polygonsLatLng.find(
@@ -201,18 +207,21 @@ export class GoogleMapsComponent {
                                     nome: nome,
                                     visualizacao: true,
                                     polygonsOptions: [],
-                                    polygons: [],
+                                    polygons: []
                                 };
                                 this.polygonsLatLng.push(latLngPolygonsOptions);
                                 jaExisteNome = latLngPolygonsOptions; // Update the reference to the new object
                             }
 
                             jaExisteNome.polygonsOptions.push(options);
-                            jaExisteNome.polygons.push(new google.maps.Polygon(options));
+                            jaExisteNome.polygons.push(
+                                new google.maps.Polygon(options)
+                            );
 
                             // Update existing object in polygonsLatLng
-                            this.polygonsLatLng = this.polygonsLatLng.map((obj) =>
-                                obj.nome === nome ? jaExisteNome : obj
+                            this.polygonsLatLng = this.polygonsLatLng.map(
+                                (obj) =>
+                                    obj.nome === nome ? jaExisteNome : obj
                             );
                         }
                     });
@@ -369,15 +378,15 @@ export class GoogleMapsComponent {
             relativeTo: this.route,
             queryParams: {
                 lat,
-                lng,
+                lng
             }
-        })
+        });
     }
 
     criarInfoView(marker: MapAdvancedMarker): void {
         marker.options = {
             title: 'Teste'
-        }
+        };
     }
 
     desenharNoMapa(): void {
@@ -386,22 +395,46 @@ export class GoogleMapsComponent {
             drawingControl: true,
             drawingControlOptions: {
                 position: google.maps.ControlPosition.BOTTOM_LEFT,
-                drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                drawingModes: [
+                    google.maps.drawing.OverlayType.POLYGON,
+                    google.maps.drawing.OverlayType.CIRCLE
+                ]
             },
             polygonOptions: {
-                editable: true,
+                editable: false
             }
         });
         drawingManager.setMap(this.map);
 
-        drawingManager.addListener("overlaycomplete", (event: any) => {
+        drawingManager.addListener('overlaycomplete', (event: any) => {
             const shape = event.overlay;
             shape.type = event.type;
         });
 
-        drawingManager.addListener("overlaycomplete", function() {
-            // overlayClickListener(event.overlay);
-            // $('#vertices').val(event.overlay.getPath().getArray());
+        drawingManager.addListener('overlaycomplete', (event: any) => {
+            // google.maps.event.addListener(event.overlay, "mouseup", (event_: any) => {
+            //     // console.log(event_)
+            // });
+            const options = {
+                paths: event.overlay.getPath(),
+                fillColor: '#5555FF',
+                strokeColor: '#FFFF00',
+                fillOpacity: 0.34901960784313724,
+                strokeOpacity: 1,
+                strokeWeight: 1.5,
+                visible: true
+            }
+
+            const polygon = event.overlay;
+            polygon.setOptions(options);
+
+            this.polygonsLatLng.unshift({
+                nome: 'desenho',
+                polygons: [polygon],
+                polygonsOptions: [options],
+                visualizacao: false
+            });
+            debugger;
         });
     }
 }
