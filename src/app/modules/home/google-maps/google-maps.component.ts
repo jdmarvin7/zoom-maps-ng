@@ -62,6 +62,7 @@ export class GoogleMapsComponent {
     abrirMinizarCheckboxs: boolean = true;
     bounds!: any;
     nomeArquivo!: string;
+    desenhado = 1
 
     // TODO: Criar infoview ao clicar no poligono
     infoView!: MapInfoWindow | undefined;
@@ -419,7 +420,7 @@ export class GoogleMapsComponent {
             //     // console.log(event_)
             // });
             const polygon = event.overlay;
-            let nome = '';
+            let nome = `Desenhado manualmente ${this.desenhado++}`;
 
             const options = {
                 paths: polygon.getPath(),
