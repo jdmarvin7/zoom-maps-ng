@@ -1,4 +1,14 @@
-import { ChangeDetectorRef, Component, ElementRef, Inject, inject, model, Renderer2, ViewChild } from '@angular/core';
+import {
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    Inject,
+    inject,
+    model,
+    OnInit,
+    Renderer2,
+    ViewChild
+} from '@angular/core';
 import {
     GoogleMapsModule,
     MapAdvancedMarker,
@@ -16,7 +26,11 @@ import { CdkDrag } from '@angular/cdk/drag-drop';
 import { FormatarStringPipe } from '../../../pipes/formatar-string.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PolygonParaGeoJSONFeature } from '../../../utils/polygonParaGeoJSONFeature';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+    MAT_DIALOG_DATA,
+    MatDialog,
+    MatDialogRef
+} from '@angular/material/dialog';
 import { GoogleMapsTokenComponent } from '../../config/google-maps-token/google-maps-token.component';
 
 @Component({
@@ -35,7 +49,7 @@ import { GoogleMapsTokenComponent } from '../../config/google-maps-token/google-
     templateUrl: './google-maps.component.html',
     styleUrl: './google-maps.component.scss'
 })
-export class GoogleMapsComponent {
+export class GoogleMapsComponent implements OnInit {
     @ViewChild('map') mapContainer!: ElementRef;
 
     map!: google.maps.Map;
@@ -64,7 +78,8 @@ export class GoogleMapsComponent {
     abrirMinizarCheckboxs: boolean = true;
     bounds!: any;
     nomeArquivo!: string;
-    desenhado = 1
+    desenhado = 1;
+    geoJsonEmVizualizacao: any = '';
 
     // TODO: Criar infoview ao clicar no poligono
     infoView!: MapInfoWindow | undefined;
@@ -74,15 +89,31 @@ export class GoogleMapsComponent {
     readonly token = model('');
     readonly dialog = inject(MatDialog);
 
-        constructor(
-            private googleMapsService: GoogleMapsService,
-            private formatStr: FormatarStringPipe,
-            private route: ActivatedRoute,
-            private router: Router,
-            private renderer: Renderer2,
-            @Inject(DOCUMENT) private document: Document,
-            private cdr: ChangeDetectorRef,
-        ) {}
+    constructor(
+        private googleMapsService: GoogleMapsService,
+        private formatStr: FormatarStringPipe,
+        private route: ActivatedRoute,
+        private router: Router,
+        private renderer: Renderer2,
+        @Inject(DOCUMENT) private document: Document,
+        private cdr: ChangeDetectorRef
+    ) {}
+
+    ngOnInit(): void {
+        // this.atualizaMap();
+
+        this.googleMapsService.pegarGeoJson().subscribe({
+            next: (data) => {
+                this.limparMaps();
+                this.geoJsonEmVizualizacao =
+                    typeof data === 'string' ? JSON.parse(data) : data;
+                if (this.geoJsonEmVizualizacao) {
+                    this.geoToLatLng(this.geoJsonEmVizualizacao);
+                }
+                this.cdr.detectChanges();
+            }
+        });
+    }
 
     initMap(map: google.maps.Map): void {
         this.map = map;
@@ -128,17 +159,21 @@ export class GoogleMapsComponent {
             const conteudo = event.target?.result as string | GeoJson;
             switch (tipoDoArquivo) {
                 case 'kml':
-                    const geo = this.converterKmlparaGeoJSON(
+                    this.geoJsonEmVizualizacao = this.converterKmlparaGeoJSON(
                         conteudo as string
                     );
-                    this.geoToLatLng(geo as GeoJson);
-                    this.googleMapsService.setarGeoJson(geo);
+                    this.geoToLatLng(this.geoJsonEmVizualizacao as GeoJson);
+                    this.googleMapsService.setarGeoJson(
+                        this.geoJsonEmVizualizacao
+                    );
                     break;
 
                 case 'geojson':
-                    const geojson = JSON.parse(conteudo as string);
-                    this.geoToLatLng(geojson as GeoJson);
-                    this.googleMapsService.setarGeoJson(geojson as string);
+                    this.geoJsonEmVizualizacao = JSON.parse(conteudo as string);
+                    this.geoToLatLng(this.geoJsonEmVizualizacao as GeoJson);
+                    this.googleMapsService.setarGeoJson(
+                        this.geoJsonEmVizualizacao as string
+                    );
                     break;
 
                 default:
@@ -207,8 +242,7 @@ export class GoogleMapsComponent {
 
                             const nome = this.formatStr.transform(
                                 feature.properties['nome'] ||
-                                    feature.properties['name'] ||
-                                    'N/A'
+                                    feature.properties['name']
                             ) as string;
 
                             let jaExisteNome = this.polygonsLatLng.find(
@@ -403,10 +437,10 @@ export class GoogleMapsComponent {
 
     desenharNoMapa(): void {
         const drawingManager = new google.maps.drawing.DrawingManager({
-            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingMode: google.maps.drawing.OverlayType.MARKER,
             drawingControl: true,
             drawingControlOptions: {
-                position: google.maps.ControlPosition.BOTTOM_LEFT,
+                position: google.maps.ControlPosition.TOP_LEFT,
                 drawingModes: [
                     google.maps.drawing.OverlayType.POLYGON,
                     google.maps.drawing.OverlayType.CIRCLE,
@@ -441,18 +475,17 @@ export class GoogleMapsComponent {
                 strokeOpacity: 1,
                 strokeWeight: 1.5,
                 visible: true
-            }
+            };
 
             polygon.setOptions(options);
-            this.polygonParaFeature(polygon, options)
+            this.polygonParaFeature(polygon, options);
 
             this.polygonsLatLng.unshift({
                 nome,
                 polygons: [polygon],
                 polygonsOptions: [options],
-                visualizacao: true,
+                visualizacao: true
             });
-            debugger;
         });
     }
 
@@ -460,7 +493,7 @@ export class GoogleMapsComponent {
         const feature = PolygonParaGeoJSONFeature.converte(polygon, properties);
         let geoJsonAtual!: any;
         this.googleMapsService.pegarGeoJson().subscribe({
-            next: data => geoJsonAtual = data,
+            next: (data) => (geoJsonAtual = data)
         });
 
         const geoJsonAtualJson: any = geoJsonAtual as GeoJson;
@@ -471,24 +504,25 @@ export class GoogleMapsComponent {
         this.googleMapsService.setarGeoJson(geoJsonAtualizado as string);
     }
 
-
     openDialog(): void {
         const dialogRef = this.dialog.open(GoogleMapsTokenComponent, {
-            data: { token: this.token() },
+            data: { token: this.token() }
         });
 
-        dialogRef.afterClosed().subscribe(result => {
-            console.log("Esse modol foi fechado");
+        dialogRef.afterClosed().subscribe((result) => {
+            console.log('Esse modol foi fechado');
 
             if (result !== undefined) {
                 this.token.set(result);
                 // this.atualizarToken(this.token());
             }
-        })
+        });
     }
 
     atualizarToken(token: string): void {
-        const oldScript = this.document.querySelector(`script[src^="https://maps.googleapis.com/maps/api/js?key="]`);
+        const oldScript = this.document.querySelector(
+            `script[src^="https://maps.googleapis.com/maps/api/js?key="]`
+        );
 
         if (oldScript) {
             oldScript.parentNode?.removeChild(oldScript);
@@ -515,5 +549,63 @@ export class GoogleMapsComponent {
             };
             this.renderer.appendChild(this.document.head, script);
         });
+    }
+
+    atualizaMap(): void {
+        if (this.map) {
+        }
+    }
+
+    salvarArquivoComo(
+        content: string,
+        fileName: string,
+        fileType: string
+    ): void {
+        const blob = new Blob([JSON.stringify(content)], { type: fileType });
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        window.URL.revokeObjectURL(url);
+    }
+
+    geoJsonParaKML(geojson: any): string {
+        const geojsonDOM = new DOMParser().parseFromString(
+            JSON.stringify(geojson),
+            'application/geo+json' as any
+        );
+        const kml = togpx.kml(geojsonDOM) as any;
+        const serializer = new XMLSerializer();
+        return serializer.serializeToString(kml);
+    }
+
+    featureCollectionToKML(featureCollection: any): string {
+        // Example of manually creating a simple KML string from a FeatureCollection
+        // This is highly simplified and would need to be expanded based on your actual data structure
+        let kmlString = '<?xml version="1.0" encoding="UTF-8"?>';
+        kmlString += '<kml xmlns="http://www.opengis.net/kml/2.2">';
+        kmlString += '<Document>';
+
+        featureCollection.features.forEach((feature: any) => {
+            // Assuming each feature has a geometry and properties
+            kmlString += `<Placemark>`;
+            kmlString += `<name>${feature.properties.name}</name>`;
+            // Convert geometry coordinates to KML format
+            // This is a placeholder; you'll need to adapt it based on your geometry type
+            kmlString += `<Point><coordinates>${feature.geometry.coordinates.join(
+                ','
+            )}</coordinates></Point>`;
+            kmlString += '</Placemark>';
+        });
+
+        kmlString += '</Document>';
+        kmlString += '</kml>';
+
+        return kmlString;
     }
 }

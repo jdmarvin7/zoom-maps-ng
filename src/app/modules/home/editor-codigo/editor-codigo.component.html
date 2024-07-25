@@ -1,1 +1,7 @@
-<div class="border-2 border-blue-400" #editor [ngClass]="classes"></div>
+<div class="w-full border-2 border-blue-400 z-10" #editor [ngClass]="classes"></div>
+
+<div class="absolute z-10 bottom-6 right-6" *ngIf="temMudanca">
+    <button class="text-white" (click)="salvarMudancas()">
+        <mat-icon>save</mat-icon>
+    </button>
+</div>

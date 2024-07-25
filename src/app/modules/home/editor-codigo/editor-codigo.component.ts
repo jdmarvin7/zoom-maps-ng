@@ -12,12 +12,14 @@ import {
 import * as ace from 'ace-builds';
 import { GoogleMapsService } from '../../../services/google-maps/google-maps.service';
 import { Subscription } from 'rxjs';
+import { SharedModule } from '../../shared/shared.module';
 
 @Component({
     selector: 'app-editor-codigo',
     standalone: true,
     imports: [
         CommonModule,
+        SharedModule,
     ],
     templateUrl: './editor-codigo.component.html',
     styleUrl: './editor-codigo.component.scss'
@@ -29,6 +31,9 @@ export class EditorCodigoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     private subscription!: Subscription;
     aceEditor!: ace.Ace.Editor;
+
+    temMudanca = false;
+    novoConteudo!: string;
 
     constructor(
         private googleMapsService: GoogleMapsService,
@@ -73,12 +78,25 @@ export class EditorCodigoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.aceEditor.session.setValue(this.conteudo);
         this.aceEditor.on('change', () => {
             const value = this.aceEditor.getValue();
+            if (value !== this.conteudo) {
+                this.temMudanca = true;
+            } else {
+                this.temMudanca = false;
+            }
+
+            this.novoConteudo = value;
         });
     }
 
     ngOnDestroy(): void {
         if (this.subscription) {
             this.subscription.unsubscribe();
+        }
+    }
+
+    salvarMudancas(): void {
+        if (this.novoConteudo && this.novoConteudo !== this.conteudo) {
+            this.googleMapsService.setarGeoJson(JSON.parse(this.novoConteudo));
         }
     }
 }
